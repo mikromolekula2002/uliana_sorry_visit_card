@@ -2,59 +2,196 @@
 let typingFinished = false;
 const floatingImages = [];
 
+let loaded=0;
+let total=0;
+
+const progressBar = document.getElementById("progressBar");
+const progressText = document.getElementById("progressText");
+
+function updateProgress() {
+
+    loaded++;
+
+    const percent = Math.floor((loaded / total) * 100);
+
+    progressBar.style.width = percent + "%";
+    progressText.textContent = `${loaded} / ${total}`;
+
+}
+
 const message = document.getElementById("message");
 const buttons = document.getElementById("buttons");
 const finalScreen = document.getElementById("finalScreen");
+
+const preloadedVideos = {};
+const videoPromise = [
+
+    "assets/videos/stupid.webm",
+    "assets/videos/crazy.webm",
+    "assets/videos/disco.webm",
+    "assets/videos/2k17.webm",
+    "assets/videos/wave.webm",
+    "assets/videos/sad.webm"
+
+].map(src=>{
+
+    return new Promise(resolve=>{
+
+        const video=document.createElement("video");
+
+        video.src=src;
+        video.preload="auto";
+
+        video.oncanplaythrough= () => {
+            updateProgress();
+            resolve();
+        };
+        video.onerror = () => {
+            updateProgress();
+            resolve();
+        };
+
+        video.load();
+
+        preloadedVideos[src]=video;
+
+    });
+
+});
+
+const happyMusic = document.getElementById("bgHappyMusic");
+const sadMusic = document.getElementById("bgSadMusic");
+
+// ===== FIX =====
+// Promise загрузки музыки
+
+const audioPromises = [
+    happyMusic,
+    sadMusic
+].map(audio => {
+
+    return new Promise(resolve => {
+
+        audio.addEventListener("canplaythrough", () => {
+            updateProgress();
+            resolve();
+        }, { once:true });
+
+        audio.addEventListener("error", () => {
+            updateProgress();
+            resolve();
+        }, { once:true });
+
+        audio.load();
+
+    });
+
+});
+
+function withTimeout(promise,time=5000){
+
+    return Promise.race([
+
+        promise,
+
+        new Promise(resolve=>setTimeout(resolve,time))
+
+    ]);
+
+}
 
 document.addEventListener("DOMContentLoaded", () => {
 
     const bg = document.getElementById("background");
 
     fetch("manifest.json")
-    .then(r => r.json())
-    .then(data => {
+        .then(r => r.json())
+        .then(data => {
 
-        const all = [...data.photos, ...data.gifs];
+            const all = [...data.photos, ...data.gifs];
+            const size = getImageSize();
 
-        const size = getImageSize();
+            // ===== FIX =====
+            // Всего файлов
 
-        all.forEach(src => {
+            total =
+                all.length +   // картинки
+                6 +            // видео
+                2;             // музыка
 
-            const img = document.createElement("img");
+            // ===== FIX #2 =====
+            // Ждем загрузки всех изображений
+            const imagePromises = all.map(src => {
 
-            img.onload = () => console.log("loaded", src);
-            img.onerror = () => console.error("failed", src);
+                return new Promise(resolve => {
 
-            img.src = src;
-            img.className = "float";
+                    const img = document.createElement("img");
 
-            const x = Math.random() * window.innerWidth;
-            const y = Math.random() * window.innerHeight;
+                    img.className = "float";
 
-            img.style.left = x + "px";
-            img.style.top = y + "px";
+                    img.onload = () => {
+                        updateProgress();
+                        resolve();
+                    };
 
-             img.style.width = size + "px";
+                    img.onerror = () => {
+                        updateProgress();
+                        resolve();
+                    };
 
-            bg.appendChild(img);
+                    img.src = src;
 
-            floatingImages.push({
-                element: img,
-                x,
-                y,
-                size, // 👈 добавили размер в модель
-                vx: (Math.random() - 0.5) * 0.3,
-                vy: (Math.random() - 0.5) * 0.3,
-                rotation: Math.random() * 20 - 10
+                    const x = Math.random() * window.innerWidth;
+                    const y = Math.random() * window.innerHeight;
+
+                    // Лучше убрать эти две строки, если потом перейдешь на transform
+                    // img.style.left = x + "px";
+                    // img.style.top = y + "px";
+
+                    const rotation = Math.random() * 20 - 10;
+
+                    img.style.transform = `translate(${x}px, ${y}px) rotate(${rotation}deg)`;
+
+                    img.style.width = size + "px";
+
+                    bg.appendChild(img);
+
+                    floatingImages.push({
+                        element: img,
+                        x,
+                        y,
+                        size,
+                        vx: (Math.random() - 0.5) * 0.3,
+                        vy: (Math.random() - 0.5) * 0.3,
+                        rotation
+                    });
+
+                });
+
+            });
+
+            Promise.all([
+                ...imagePromises.map(withTimeout),
+                ...videoPromise.map(withTimeout),
+                ...audioPromises.map(withTimeout)
+            ]).then(() => {
+                 // ===== FIX =====
+                const loader = document.getElementById("loader");
+
+                 loader.style.opacity = "0";
+
+                 setTimeout(() => {
+                    loader.remove();
+
+                    animateBackground();
+                    requestAnimationFrame(typeText);
+                       }, 400);
             });
 
         });
 
-        animateBackground();
-
-    });
-
 });
+
 
 function animateBackground() {
 
@@ -69,11 +206,12 @@ function animateBackground() {
         if (img.y < -200) img.y = window.innerHeight;
         if (img.y > window.innerHeight) img.y = -200;
 
-        img.element.style.left = img.x + "px";
-        img.element.style.top = img.y + "px";
+        // img.element.style.left = img.x + "px";
+        // img.element.style.top = img.y + "px";
 
-        img.element.style.transform =
-            `rotate(${img.rotation}deg)`;
+        // img.element.style.transform =
+        //     `rotate(${img.rotation}deg)`;
+        img.element.style.transform = `translate(${img.x}px,${img.y}px) rotate(${img.rotation}deg)`;
     });
 
     requestAnimationFrame(animateBackground);
@@ -149,7 +287,8 @@ function typeText() {
         return;
     }
 
-    message.innerHTML += text[i];
+    // message.innerHTML += text[i];
+    message.append(text[i]);
 
     const current = text[i];
     i++;
@@ -162,9 +301,20 @@ function typeText() {
     setTimeout(typeText, delay);
 }
 
-typeText();
+// typeText();
 
 const face = document.getElementById("face");
+[
+"assets/faces/happy.png",
+"assets/faces/sad.png",
+"assets/faces/neutral.png"
+].forEach(src=>{
+
+    const img=new Image();
+    img.src=src;
+
+});
+
 function getDistance(el, mouseX, mouseY) {
     const rect = el.getBoundingClientRect();
 
@@ -462,8 +612,7 @@ function showNoVideo() {
 
     clearVideos();
 
-    const video = document.createElement("video");
-    video.src = "assets/videos/sad.webm";
+    const video = preloadedVideos["assets/videos/sad.webm"].cloneNode();
     video.autoplay = true;
     video.loop = true;
     video.muted = true;
@@ -490,7 +639,7 @@ function showYesVideos() {
 
     sources.forEach(src => {
 
-        const video = document.createElement("video");
+        const video = preloadedVideos[src].cloneNode(true);
         video.src = src;
         video.autoplay = true;
         video.loop = true;
@@ -546,21 +695,19 @@ function getImageSize() {
 }
 
 async function logEvent(action){
+fetch("/api/event",{
 
-    try{
+    method:"POST",
 
-        await fetch("/api/event",{
-            method:"POST",
-            headers:{
-                "Content-Type":"application/json"
-            },
-            body:JSON.stringify({
-                action:action
-            })
-        });
+    headers:{
+        "Content-Type":"application/json"
+    },
 
-    }catch(e){
-        console.log(e);
-    }
+    body:JSON.stringify({
+        action
+    }),
 
+    keepalive:true
+
+}).catch(()=>{});
 }

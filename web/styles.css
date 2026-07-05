@@ -25,6 +25,54 @@ body {
     );
 }
 
+#loader{
+
+    position:fixed;
+    inset:0;
+
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+    align-items:center;
+
+    gap:20px;
+
+    background:#111;
+
+    z-index:99999;
+
+    transition:.4s;
+}
+
+.progress{
+
+    width:320px;
+    height:12px;
+
+    border-radius:100px;
+
+    overflow:hidden;
+
+    background:#444;
+}
+
+#progressBar{
+
+    width:0%;
+
+    height:100%;
+
+    background:white;
+
+    transition:width .15s linear;
+}
+
+#progressText{
+
+    color:white;
+    font-size:18px;
+}
+
 /* фикс фона */
 .background {
     position: fixed;
