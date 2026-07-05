@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Готова ли ты вернуть наше общение?</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css"/>
+
+</head>
+<body>
+
+<audio id="bgHappyMusic" loop>
+    <source src="assets/music/happy_theme.wav" type="audio/mpeg">
+</audio>
+
+<audio id="bgSadMusic" loop>
+    <source src="assets/music/sad_theme.wav" type="audio/mpeg">
+</audio>
+
+<div class="background" id="background"></div>
+<div id="lightning"></div>
+
+<div class="overlay"></div>
+
+<canvas id="rain"></canvas>
+<canvas id="confetti"></canvas>
+
+<div class="card-wrapper">
+
+    <img id="face" src="assets/faces/neutral.png">
+    
+    <div class="card" id="card">
+
+        <h1>Простишь ли ты меня?</h1>
+
+        <div id="message"></div>
+
+        <div class="buttons" id="buttons">
+
+            <button id="yesBtn">
+                ❤️ Да
+            </button>
+
+            <button id="noBtn">
+                💔 Нет
+            </button>
+
+        </div>
+
+        <div class="final-screen" id="finalScreen"></div>
+
+    </div>
+</div>
+
+<!-- VIDEO LAYERS -->
+<div id="videoLayer"></div>
+
+<script src="app.js"></script>
+
+</body>
+</html>
