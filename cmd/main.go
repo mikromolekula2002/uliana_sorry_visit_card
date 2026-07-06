@@ -37,6 +37,6 @@ func main() {
 
 	wrapped := handlers.LoggingMiddleware(mux)
 
-	logger.Info.Println("Server started :8080")
-	log.Fatal(http.ListenAndServe(":8080", wrapped))
+	logger.Info.Println("Server started :80")
+	log.Fatal(http.ListenAndServe(":80", wrapped))
 }
